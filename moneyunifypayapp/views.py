@@ -1,18 +1,21 @@
 from django.shortcuts import render
-
-from django.http import JsonResponse
 from moneyunify import MoneyUnifyClient, ApiError, TimeoutError
 
 def test_moneyunify(request):
-    client = MoneyUnifyClient(muid='') # Replace with your own MUID from the MoneyUnify dashboard
-    phone_number = '0765655244'
-    amount = 1
+    response = None
 
-    try:
-        response = client.request_payment(phone_number, amount)
-        return JsonResponse(response)
-    except ApiError as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    except TimeoutError as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    if request.method == 'POST':
+        muid = '' # Replace with your own MUID from the MoneyUnify dashboard
+        client = MoneyUnifyClient(muid)
 
+        phone_number = request.POST.get('phone_number')
+        amount = request.POST.get('amount')
+
+        try:
+            response = client.request_payment(phone_number, amount)
+        except ApiError as e:
+            response = {'error': str(e)}
+        except TimeoutError as e:
+            response = {'error': str(e)}
+
+    return render(request, 'moneyunifypayapp/payment_form.html', {'response': response})
